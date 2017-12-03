@@ -1,0 +1,43 @@
+{
+  "name": "@timkendrick/monaco-editor-loader",
+  "version": "0.0.1",
+  "description": "Webpack loader for the Monaco editor",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timkendrick/monaco-editor-loader.git"
+  },
+  "author": "Tim Kendrick <timkendrick@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timkendrick/monaco-editor-loader/issues"
+  },
+  "homepage": "https://github.com/timkendrick/monaco-editor-loader",
+  "keywords": [
+    "monaco",
+    "editor",
+    "webpack",
+    "loader",
+    "bundle",
+    "bundler",
+    "commonjs",
+    "require",
+    "requirejs",
+    "amd"
+  ],
+  "dependencies": {
+    "loader-utils": "^1.0.0",
+    "mime": "^2.0.0",
+    "url-loader": "^0.6.0"
+  },
+  "devDependencies": {
+    "@timkendrick/eslint-config": "^1.0.0",
+    "eslint": "^4.0.0"
+  }
+}

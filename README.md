@@ -12,89 +12,126 @@ npm install @timkendrick/monaco-editor-loader --save-dev
 
 # Usage
 
-This loader allows you to create a Monaco editor build with arbitrary extensions enabled, as well as optionally bundling CSS and web worker scripts into the main output.
-
-## Scenario 1: Serving assets separately (requires external server):
-
-```js
-{
-  loader: '@timkendrick/monaco-editor-loader',
-  options: {
-    config: {
-      baseUrl: '/monaco-files', // This path will be prepended to CSS and web worker asset requests
-    },
-    extensions:  [
-      '/path/to/vs/editor/editor.main.nls',
-      ...
-    ],
-  },
-}
-```
-
-## Scenario 2: Bundling asset files into main output (no server required):
-
-```js
-{
-  loader: '@timkendrick/monaco-editor-loader',
-  options: {
-    assets: {
-      'vs/editor/editor.main.css': {
-        type: 'css',
-        path: '/path/to/vs/editor/editor.main.css',
-      },
-      'vs/base/worker/workerMain.js': {
-        type: 'worker',
-        path: '/path/to/vs/base/worker/workerMain.js',
-        config: {
-          scripts: {
-            'vs/language/typescript/src/worker.js': '/path/to/src/worker.js',
-            'vs/language/typescript/lib/typescriptServices.js': '/path/to/typescriptServices.js',
-            ...
-          },
-        },
-      },
-      ...
-    },
-    extensions:  [
-      '/path/to/vs/editor/editor.main.nls',
-      ...
-    ],
-  },
-}
-```
-
-If both `baseUrl` and `assets` are provided, any resources specified in the `assets` configuration will be loaded from the compiled bundle, while any others will be loaded in at runtime from the path specified by `baseUrl`.
+This loader allows you to create a Monaco editor build with arbitrary extensions enabled, as well as optionally bundling web worker scripts into the main output.
 
 See the [@timkendrick/monaco-editor](https://github.com/timkendrick/monaco-editor/blob/master/webpack.config.js) repository for a real-life example.
+
+## Scenario 1: Serving worker scripts separately (requires external server):
+
+```js
+{
+  loader: '@timkendrick/monaco-editor-loader',
+  options: {
+    modules: [
+      {
+        name: 'vs',
+        root: 'path/to/vscode/src',
+      },
+      {
+        name: 'vs/extension/name',
+        root: 'path/to/extension/src',
+        main: 'monaco.contribution',
+        include: true,
+      },
+      {
+        name: 'vs/library/name',
+        root: 'path/to/library/src',
+        main: 'monaco.contribution',
+      },
+    ],
+    workers: [
+      {
+        name: 'workerMain.js',
+        main: 'path/to/worker/main.ts',
+        includes: [
+          'path/to/first/worker/service.ts',
+          'path/to/second/worker/service.ts',
+        ],
+      },
+    ],
+  },
+}
+```
+
+In the above example, the compilation emits additional worker scripts that are loaded at runtime from the webpack `publicPath` directory.
+
+This directory can be overridden at runtime by specifying the `MonacoEnvironment.baseUrl` global variable before the bundle script is loaded:
+
+```html
+<script>
+  window.MonacoEnvironment = {
+    baseUrl: 'path/to/worker/scripts'
+  };
+</script>
+<script src="monaco/index.js"></script>
+```
+
+## Scenario 2: Bundling worker scripts into main output file (no additional server required):
+
+```js
+{
+  loader: '@timkendrick/monaco-editor-loader',
+  options: {
+    workerOptions: {
+      inline: true,
+    },
+    modules: [
+      {
+        name: 'vs',
+        root: 'path/to/vscode/src',
+      },
+      {
+        name: 'vs/extension/name',
+        root: 'path/to/extension/src',
+        main: 'monaco.contribution',
+        include: true,
+      },
+      {
+        name: 'vs/library/name',
+        root: 'path/to/library/src',
+        main: 'monaco.contribution',
+      },
+    ],
+    workers: [
+      {
+        name: 'workerMain.js',
+        main: 'path/to/worker/main.ts',
+        includes: [
+          'path/to/first/worker/service.ts',
+          'path/to/second/worker/service.ts',
+        ],
+      },
+    ],
+  },
+}
+```
+
+In the above example, worker scripts will be embedded within the main output bundle.
 
 # Loader options
 
 | Name | Type | Required | Default | Description |
 | ----- | ---- | -------- | ------- | ----------- |
-| `extensions` | `Array<string>` | No | `[]` | Paths to Monaco plugin AMD module definition files |
-| `assets` | `{[path]: [asset]}` | No | `{}` | Assets to be bundled into the compiled output |
-| `config` | `{}` | No | `{}` | AMD configuration object passed to the internal Monaco module loader |
-| `config.baseUrl` | `string` | No | `""` | Path from which to load any assets not present in the compiled output bundle |
-| `entry` | `string` | No | `"vs/editor/editor.main"` | AMD module name to use as the main entry point |
-| `debug` | `boolean` | No | `false` | Whether to log debug information during the Webpack build |
+| `modules` | `Array<ModuleDefinition>` | No | `[]` | Paths to Monaco AMD module definition files |
+| `workers` | `Array<WorkerDefinition>` | No | `[]` | Worker modules to be included in the compiled output |
+| `workerOptions` | `object` | No | `{}` | Configuration options for worker scripts |
+| `workerOptions.inline` | `boolean` | No | `false` | Whether to bundle worker scripts into the main bundle |
+| `workerOptions.filename` | `string` | No | `"[hash].worker.js"` | Filename template for worker scripts |
+| `workerOptions.baseUrl` | `string` | No | webpack `publicPath` | Base URL from which to load worker scripts at runtime |
 
-## Asset types
+## `ModuleDefinition`
 
-There are two asset types: `css` and `worker`. They are defined as follows:
+| Name | Type | Required | Default | Description |
+| ----- | ---- | -------- | ------- | ----------- |
+| `name` | `string` | Yes | N/A | Visual Studio extension name |
+| `root` | `string` | Yes | N/A | Path to extension source files |
+| `main` | `string` | No | `undefined` | Path to extension entry point file, relative to `root` |
+| `include` | `boolean` | No | `false` | Whether to include extension entry point in output bundle |
 
-```typescript
-interface CssAsset {
-  type: "css",
-  path: string, // Path to CSS file
-}
+## `WorkerDefinition`
 
-interface WorkerAsset {
-  type: "worker",
-  path: string, // Path to worker JS file
-  config: {
-    scripts: {
-      [moduleId]: string, // Remote worker scripts to bundle into the worker JS file (keyed by AMD module name)
-    },
-  },
-}
-```
+| Name | Type | Required | Default | Description |
+| ----- | ---- | -------- | ------- | ----------- |
+| `name` | `string` | Yes | N/A | Name of worker output script |
+| `main` | `string` | Yes | N/A | Path to worker entry point file |
+| `includes` | `Array<string>` | No | `[]` | List of additional service entry point files to bundle into worker script |

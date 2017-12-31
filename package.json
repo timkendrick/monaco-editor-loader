@@ -1,6 +1,6 @@
 {
   "name": "@timkendrick/monaco-editor-loader",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Webpack loader for the Monaco editor",
   "main": "lib/index.js",
   "directories": {

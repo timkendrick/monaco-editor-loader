@@ -14,7 +14,7 @@ npm install @timkendrick/monaco-editor-loader --save-dev
 
 This loader allows you to create a Monaco editor build with arbitrary extensions enabled, as well as optionally bundling web worker scripts into the main output.
 
-See the [@timkendrick/monaco-editor](https://github.com/timkendrick/monaco-editor/blob/master/webpack.config.js) repository for a real-life example.
+See the [@timkendrick/monaco-editor](https://github.com/timkendrick/monaco-editor) repository for a real-life example.
 
 ## Scenario 1: Serving worker scripts separately (requires external server):
 
